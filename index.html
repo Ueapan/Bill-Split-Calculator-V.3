@@ -1,0 +1,1505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Split Calculator V.3</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #ADD8E6; /* Light blue background as requested */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .app-container {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Screen specific styling */
+        .screen {
+            display: none; /* Hidden by default, shown by JS */
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1 {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 1rem;
+        }
+
+        /* Input styling */
+        .input-group {
+            text-align: left;
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #4A5568;
+        }
+
+        .input-group input[type="text"],
+        .input-group input[type="number"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #CBD5E0;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+        }
+
+        .input-group input[type="text"]:focus,
+        .input-group input[type="number"]:focus {
+            border-color: #4682B4; /* Button color for focus */
+        }
+
+        /* Button styling */
+        .btn {
+            background-color: #4682B4; /* Steel blue button color as requested */
+            color: white;
+            padding: 0.75rem 1.25rem;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            background-color: #356790; /* Darker shade for hover */
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background-color: #E2E8F0;
+            color: #4A5568; /* Ensuring good contrast */
+        }
+
+        .btn-secondary:hover {
+            background-color: #CBD5E0;
+        }
+
+        .btn-danger {
+            background-color: #EF4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: #DC2626;
+        }
+
+        /* List styling */
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            background-color: #F7FAFC;
+            border: 1px solid #EDF2F7;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            color: #2D3748;
+            transition: background-color 0.2s ease;
+        }
+
+        .list-item:hover {
+            background-color: #E2E8F0;
+        }
+
+        .list-item-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #6B7280;
+            font-size: 1.1rem;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+
+        .list-item-btn:hover {
+            color: #2D3748;
+            background-color: #CBD5E0;
+        }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-content h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #333;
+        }
+
+        .modal-content .button-group {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+            margin-top: 1.5rem;
+        }
+
+        /* Navigation buttons */
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .navigation-buttons .btn {
+            flex-grow: 1;
+        }
+
+        /* Item assignment checkboxes */
+        .item-assignment-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #EDF2F7;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .item-assignment-list label {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background-color: #F7FAFC;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .item-assignment-list label:hover {
+            background-color: #E2E8F0;
+        }
+
+        .item-assignment-list input[type="checkbox"] {
+            margin-right: 0.75rem;
+            transform: scale(1.2);
+        }
+
+        .item-assignment-list span {
+            flex-grow: 1;
+            text-align: left;
+            font-size: 1rem;
+            color: #2D3748;
+        }
+
+        .item-assignment-list .item-price {
+            font-weight: 600;
+            color: #4A5568;
+        }
+
+        /* Final Result Styling */
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+
+        .result-table th, .result-table td {
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid #EDF2F7;
+            text-align: right; /* Align numbers to the right */
+            font-size: 0.95rem;
+            color: #2D3748;
+        }
+        .result-table th:first-child, .result-table td:first-child {
+            text-align: left; /* Name column to the left */
+        }
+
+        .result-table th {
+            font-weight: 600;
+            background-color: #F7FAFC;
+            color: #4A5568;
+            border-top: 1px solid #EDF2F7;
+        }
+
+        .result-table tbody td:last-child { /* Make the 'Total' column text bold for individual rows */
+            font-weight: 800; /* Increased boldness for individual totals */
+            color: black; /* Changed color to black */
+        }
+
+        .result-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .grand-total-row th, .grand-total-row td {
+            font-weight: 700; /* Standard bold for grand total */
+            font-size: 1.1rem;
+            border-top: 2px solid #CBD5E0;
+            border-bottom: 2px double #CBD5E0; /* Double line for final total */
+            color: black; /* Changed color to black */
+        }
+
+        /* Utility classes */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Meal List Screen -->
+        <div id="project-list-screen" class="screen active">
+            <h1>Bill Split Calculator V.3</h1>
+            <div id="project-list" class="flex flex-col gap-2 mb-4">
+                <!-- Meals will be loaded here by JS -->
+            </div>
+            <button id="add-project-btn" class="btn w-full">Create new Meal</button>
+        </div>
+
+        <!-- Menu Entry Screen -->
+        <div id="menu-entry-screen" class="screen">
+            <h2 id="menu-entry-title">Menu List for [Meal Name]</h2>
+            <div class="input-group">
+                <label for="menu-item-name">Item Name</label>
+                <input type="text" id="menu-item-name" placeholder="e.g., Papaya pok pok">
+            </div>
+            <div class="input-group">
+                <label for="menu-item-price">Price</label>
+                <input type="number" id="menu-item-price" placeholder="e.g., 100">
+            </div>
+            <button id="add-menu-item-btn" class="btn w-full mb-4">Add Item</button>
+
+            <!-- Upload Receipt Functionality -->
+            <div class="input-group mt-6">
+                <label for="recipe-file-input">Upload Receipt (Photo/Text)</label>
+                <input type="file" id="recipe-file-input" accept="image/*,.txt,.csv" class="w-full p-2 border border-gray-300 rounded-md">
+                <p class="text-xs text-gray-500 mt-1 text-left">Upload a photo or text file with items and prices (e.g., Papaya pok pok,100)</p>
+            </div>
+            <button id="upload-recipe-btn" class="btn w-full mb-4">Upload Receipt</button>
+            <div id="loading-indicator" class="hidden text-center text-gray-600 mt-2">Processing receipt... Please wait.</div>
+
+            <div id="menu-items-list" class="flex flex-col gap-2 mb-4 max-h-48 overflow-y-auto">
+                <!-- Menu items will be listed here -->
+            </div>
+            <div class="navigation-buttons">
+                <button id="menu-back-btn" class="btn btn-secondary">Back</button>
+                <button id="menu-next-btn" class="btn">Next</button>
+            </div>
+        </div>
+
+        <!-- People Entry Screen -->
+        <div id="people-entry-screen" class="screen">
+            <h2 id="people-entry-title">People for [Meal Name]</h2>
+            <div class="input-group">
+                <label for="person-name">Person Name</label>
+                <input type="text" id="person-name" placeholder="e.g., Mod tanoi">
+            </div>
+            <button id="add-person-btn" class="btn w-full mb-4">Add Person</button>
+            <div id="people-list" class="flex flex-col gap-2 mb-4 max-h-48 overflow-y-auto">
+                <!-- People will be listed here -->
+            </div>
+            <div class="navigation-buttons">
+                <button id="people-back-btn" class="btn btn-secondary">Back</button>
+                <button id="people-next-btn" class="btn">Next</button>
+            </div>
+        </div>
+
+        <!-- Item Assignment Screen -->
+        <div id="item-assignment-screen" class="screen">
+            <h2 id="item-assignment-person-name">Assign Items to [Person Name]</h2>
+            <div id="assignment-list-container" class="item-assignment-list">
+                <!-- Checkboxes for menu items will go here -->
+            </div>
+            <div class="navigation-buttons">
+                <button id="assignment-back-btn" class="btn btn-secondary">Back</button>
+                <button id="assignment-next-btn" class="btn">Next</button>
+            </div>
+        </div>
+
+        <!-- Final Details Screen (Tax, Service Charge, Tip) -->
+        <div id="final-details-screen" class="screen">
+            <h2>Final Details</h2>
+            <div class="input-group">
+                <label for="vat-percent">VAT (%)</label>
+                <input type="number" id="vat-percent" value="0">
+            </div>
+            <div class="input-group">
+                <label for="service-charge-percent">Service Charge (%)</label>
+                <input type="number" id="service-charge-percent" value="0">
+            </div>
+            <!-- Removed Tip input field -->
+            <div class="navigation-buttons">
+                <button id="final-details-back-btn" class="btn btn-secondary">Back</button>
+                <button id="calculate-final-btn" class="btn">Calculate</button>
+            </div>
+        </div>
+
+        <!-- Result Screen -->
+        <div id="result-screen" class="screen">
+            <h2>Split Bill Result</h2>
+            <table class="result-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Price</th>
+                        <th>Service Charge (%)</th>
+                        <th>VAT (%)</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="results-table-body">
+                    <!-- Results per person will be displayed here -->
+                </tbody>
+                <tfoot>
+                    <tr class="grand-total-row">
+                        <th>Grand Total</th>
+                        <td id="grand-total-price"></td>
+                        <td id="grand-total-service-charge"></td>
+                        <td id="grand-total-vat"></td>
+                        <td id="grand-total-final"></td>
+                    </tr>
+                </tfoot>
+            </table>
+            <div class="navigation-buttons">
+                <button id="result-back-to-projects-btn" class="btn">Back to Meals</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Modals -->
+    <!-- Add/Edit Meal Name Modal -->
+    <div id="project-name-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="project-modal-title">Create New Meal</h3>
+            <div class="input-group">
+                <label for="modal-project-name">Meal Name</label>
+                <input type="text" id="modal-project-name" placeholder="e.g., Dinner with 51">
+            </div>
+            <div class="button-group">
+                <button id="cancel-project-modal-btn" class="btn btn-secondary">Cancel</button>
+                <button id="save-project-modal-btn" class="btn">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Meal Modal -->
+    <div id="confirm-delete-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Confirm Deletion</h3>
+            <p>Are you sure you want to delete meal "<span id="delete-project-name"></span>"? This action cannot be undone.</p>
+            <div class="button-group">
+                <button id="cancel-delete-modal-btn" class="btn btn-secondary">Cancel</button>
+                <button id="confirm-delete-modal-btn" class="btn btn-danger">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Alert/Message Box Modal -->
+    <div id="custom-alert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="custom-alert-title"></h3>
+            <p id="custom-alert-message"></p>
+            <div class="button-group">
+                <button id="custom-alert-ok-btn" class="btn">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Global Variables and Constants ---
+        const APP_ID = 'bill-split-v2'; // Unique ID for localStorage
+        let currentScreen = 'project-list-screen';
+        let projects = {}; // Stores all bill split meals (renamed from projects)
+        let currentProjectId = null; // ID of the currently active meal
+        let currentAssignmentPersonIndex = 0; // For item assignment screen iteration
+
+        // --- DOM Elements ---
+        const screens = {
+            projectList: document.getElementById('project-list-screen'),
+            menuEntry: document.getElementById('menu-entry-screen'),
+            peopleEntry: document.getElementById('people-entry-screen'),
+            itemAssignment: document.getElementById('item-assignment-screen'),
+            finalDetails: document.getElementById('final-details-screen'),
+            result: document.getElementById('result-screen')
+        };
+
+        const projectListDiv = document.getElementById('project-list');
+        const addProjectBtn = document.getElementById('add-project-btn');
+
+        const menuEntryTitle = document.getElementById('menu-entry-title');
+        const menuItemNameInput = document.getElementById('menu-item-name');
+        const menuItemPriceInput = document.getElementById('menu-item-price');
+        const addMenuItemBtn = document.getElementById('add-menu-item-btn');
+        const recipeFileInput = document.getElementById('recipe-file-input');
+        const uploadRecipeBtn = document.getElementById('upload-recipe-btn');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const menuItemsListDiv = document.getElementById('menu-items-list');
+        const menuBackBtn = document.getElementById('menu-back-btn');
+        const menuNextBtn = document.getElementById('menu-next-btn');
+
+        const peopleEntryTitle = document.getElementById('people-entry-title');
+        const personNameInput = document.getElementById('person-name');
+        const addPersonBtn = document.getElementById('add-person-btn');
+        const peopleListDiv = document.getElementById('people-list');
+        const peopleBackBtn = document.getElementById('people-back-btn');
+        const peopleNextBtn = document.getElementById('people-next-btn');
+
+        const itemAssignmentPersonName = document.getElementById('item-assignment-person-name');
+        const assignmentListContainer = document.getElementById('assignment-list-container');
+        const assignmentBackBtn = document.getElementById('assignment-back-btn');
+        const assignmentNextBtn = document.getElementById('assignment-next-btn');
+
+        const vatPercentInput = document.getElementById('vat-percent');
+        const serviceChargePercentInput = document.getElementById('service-charge-percent');
+        const finalDetailsBackBtn = document.getElementById('final-details-back-btn');
+        const calculateFinalBtn = document.getElementById('calculate-final-btn');
+
+        const resultsTableBody = document.getElementById('results-table-body');
+        const grandTotalPrice = document.getElementById('grand-total-price');
+        const grandTotalVat = document.getElementById('grand-total-vat');
+        const grandTotalServiceCharge = document.getElementById('grand-total-service-charge');
+        const grandTotalFinal = document.getElementById('grand-total-final');
+
+        const resultBackToProjectsBtn = document.getElementById('result-back-to-projects-btn');
+
+        // Modals
+        const projectNameModal = document.getElementById('project-name-modal');
+        const projectModalTitle = document.getElementById('project-modal-title');
+        const modalProjectNameInput = document.getElementById('modal-project-name');
+        const cancelProjectModalBtn = document.getElementById('cancel-project-modal-btn');
+        const saveProjectModalBtn = document.getElementById('save-project-modal-btn');
+
+        const confirmDeleteModal = document.getElementById('confirm-delete-modal');
+        const deleteProjectNameSpan = document.getElementById('delete-project-name');
+        const cancelDeleteModalBtn = document.getElementById('cancel-delete-modal-btn');
+        const confirmDeleteModalBtn = document.getElementById('confirm-delete-modal-btn');
+
+        const customAlertModal = document.getElementById('custom-alert-modal');
+        const customAlertTitle = document.getElementById('custom-alert-title');
+        const customAlertMessage = document.getElementById('custom-alert-message');
+        const customAlertOkBtn = document.getElementById('custom-alert-ok-btn');
+
+        // --- Data Structure for a Meal ---
+        // {
+        //     id: 'uuid',
+        //     name: 'Meal Name',
+        //     menuItems: [{ id: 'uuid', name: 'Papaya pok pok', price: 100 }],
+        //     people: [{ id: 'uuid', name: 'Mod tanoi' }],
+        //     assignments: {
+        //         'personId1': ['menuItemId1', 'menuItemId3'],
+        //         'personId2': ['menuItemId2']
+        //     },
+        //     vat: 0,
+        //     serviceCharge: 0,
+        //     tip: 0 // Kept for backward compatibility, will be ignored/set to 0
+        // }
+
+        // --- Utility Functions ---
+
+        /**
+         * Generates a unique ID (UUID v4).
+         * @returns {string} A UUID string.
+         */
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0,
+                      v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        /**
+         * Displays a custom alert modal.
+         * @param {string} title The title of the alert.
+         * @param {string} message The message to display.
+         */
+        function showAlert(title, message) {
+            customAlertTitle.textContent = title;
+            customAlertMessage.textContent = message;
+            customAlertModal.classList.add('active');
+        }
+
+        /**
+         * Hides the custom alert modal.
+         */
+        function hideAlert() {
+            customAlertModal.classList.remove('active');
+        }
+
+        /**
+         * Displays a confirmation modal.
+         * @param {string} mealName The name of the meal to confirm deletion.
+         * @returns {Promise<boolean>} A promise that resolves to true if confirmed, false otherwise.
+         */
+        function showConfirmDeleteModal(mealName) {
+            return new Promise((resolve) => {
+                deleteProjectNameSpan.textContent = mealName;
+                confirmDeleteModal.classList.add('active');
+
+                const confirmHandler = () => {
+                    confirmDeleteModal.classList.remove('active');
+                    confirmDeleteModalBtn.removeEventListener('click', confirmHandler);
+                    cancelDeleteModalBtn.removeEventListener('click', cancelHandler);
+                    resolve(true);
+                };
+
+                const cancelHandler = () => {
+                    confirmDeleteModal.classList.remove('active');
+                    confirmDeleteModalBtn.removeEventListener('click', confirmHandler);
+                    cancelDeleteModalBtn.removeEventListener('click', cancelHandler);
+                    resolve(false);
+                };
+
+                confirmDeleteModalBtn.addEventListener('click', confirmHandler);
+                cancelDeleteModalBtn.addEventListener('click', cancelHandler);
+            });
+        }
+
+        /**
+         * Switches the active screen.
+         * @param {string} screenId The ID of the screen to activate.
+         */
+        function showScreen(screenId) {
+            Object.values(screens).forEach(screen => screen.classList.remove('active'));
+            screens[screenId].classList.add('active');
+            currentScreen = screenId; // Update global current screen state
+        }
+
+        /**
+         * Loads all meals from localStorage.
+         */
+        function loadProjects() {
+            try {
+                const storedProjects = localStorage.getItem(APP_ID);
+                if (storedProjects) {
+                    projects = JSON.parse(storedProjects);
+                } else {
+                    projects = {};
+                }
+            } catch (e) {
+                console.error("Error loading meals from localStorage:", e);
+                projects = {}; // Fallback to empty if corrupted
+            }
+            renderProjectList();
+        }
+
+        /**
+         * Saves all meals to localStorage.
+         */
+        function saveProjects() {
+            try {
+                localStorage.setItem(APP_ID, JSON.stringify(projects));
+            } catch (e) {
+                console.error("Error saving meals to localStorage:", e);
+                showAlert('Storage Error', 'Could not save data. Please check your browser settings.');
+            }
+        }
+
+        /**
+         * Updates the current meal in the global projects object and saves.
+         */
+        function updateCurrentProject() {
+            if (currentProjectId && projects[currentProjectId]) {
+                // Ensure assignments are initialized if not present
+                if (!projects[currentProjectId].assignments) {
+                    projects[currentProjectId].assignments = {};
+                }
+                saveProjects();
+            }
+        }
+
+        // --- Meal List Screen Functions ---
+
+        /**
+         * Renders the list of meals on the Meal List Screen.
+         */
+        function renderProjectList() {
+            projectListDiv.innerHTML = ''; // Clear existing list
+            const sortedProjectIds = Object.keys(projects).sort((a, b) => {
+                // Sort by last modified or creation date if available, otherwise by name
+                const projectA = projects[a];
+                const projectB = projects[b];
+                if (projectA.createdAt && projectB.createdAt) {
+                    return new Date(projectB.createdAt) - new Date(projectB.createdAt);
+                }
+                return projectA.name.localeCompare(projectB.name);
+            });
+
+            if (sortedProjectIds.length === 0) {
+                projectListDiv.innerHTML = '<p class="text-gray-500 italic">No meals yet. Click "Create new Meal" to start!</p>';
+            }
+
+            sortedProjectIds.forEach(id => {
+                const project = projects[id];
+                const projectElement = document.createElement('div');
+                projectElement.className = 'list-item justify-between';
+                projectElement.innerHTML = `
+                    <span class="cursor-pointer flex-grow text-left project-name-display" data-project-id="${id}">${project.name}</span>
+                    <div class="flex gap-2">
+                        <button class="list-item-btn edit-project-btn" data-project-id="${id}" title="Edit Name">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="list-item-btn delete-project-btn" data-project-id="${id}" title="Delete Meal">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                projectListDiv.appendChild(projectElement);
+            });
+        }
+
+        /**
+         * Handles creating a new meal.
+         */
+        function createNewProject() {
+            projectModalTitle.textContent = 'Create New Meal';
+            modalProjectNameInput.value = '';
+            projectNameModal.classList.add('active');
+            modalProjectNameInput.focus();
+
+            // Event listeners for modal
+            const saveHandler = () => {
+                const name = modalProjectNameInput.value.trim();
+                if (name) {
+                    const newId = generateUUID();
+                    projects[newId] = {
+                        id: newId,
+                        name: name,
+                        menuItems: [],
+                        people: [],
+                        assignments: {}, // Each person's assigned items
+                        vat: 0,
+                        serviceCharge: 0,
+                        tip: 0, // Initialize to 0 even if not used, for consistency
+                        createdAt: new Date().toISOString()
+                    };
+                    saveProjects();
+                    // Directly select the newly created meal and navigate to its menu list
+                    selectProject(newId);
+                    projectNameModal.classList.remove('active');
+                    // Clean up listeners
+                    saveProjectModalBtn.removeEventListener('click', saveHandler);
+                    cancelProjectModalBtn.removeEventListener('click', cancelHandler);
+                } else {
+                    showAlert('Input Required', 'Please enter a Meal name.');
+                }
+            };
+
+            const cancelHandler = () => {
+                projectNameModal.classList.remove('active');
+                // Clean up listeners
+                saveProjectModalBtn.removeEventListener('click', saveHandler);
+                cancelProjectModalBtn.removeEventListener('click', cancelHandler);
+            };
+
+            saveProjectModalBtn.addEventListener('click', saveHandler);
+            cancelProjectModalBtn.addEventListener('click', cancelHandler);
+        }
+
+        /**
+         * Handles editing an existing meal's name.
+         * @param {string} mealId The ID of the meal to edit.
+         */
+        function editProjectName(mealId) {
+            const project = projects[mealId];
+            if (!project) return;
+
+            projectModalTitle.textContent = `Edit Meal Name: ${project.name}`;
+            modalProjectNameInput.value = project.name;
+            projectNameModal.classList.add('active');
+            modalProjectNameInput.focus();
+
+            // Event listeners for modal
+            const saveHandler = () => {
+                const newName = modalProjectNameInput.value.trim();
+                if (newName) {
+                    project.name = newName;
+                    saveProjects();
+                    renderProjectList();
+                    projectNameModal.classList.remove('active');
+                    // Clean up listeners
+                    saveProjectModalBtn.removeEventListener('click', saveHandler);
+                    cancelProjectModalBtn.removeEventListener('click', cancelHandler);
+                } else {
+                    showAlert('Input Required', 'Meal name cannot be empty.');
+                }
+            };
+
+            const cancelHandler = () => {
+                projectNameModal.classList.remove('active');
+                // Clean up listeners
+                saveProjectModalBtn.removeEventListener('click', saveHandler);
+                cancelProjectModalBtn.removeEventListener('click', cancelHandler);
+            };
+
+            saveProjectModalBtn.addEventListener('click', saveHandler);
+            cancelProjectModalBtn.addEventListener('click', cancelHandler);
+        }
+
+        /**
+         * Selects a meal and navigates to the menu entry screen.
+         * @param {string} mealId The ID of the meal to select.
+         */
+        function selectProject(mealId) {
+            currentProjectId = mealId;
+            if (projects[currentProjectId]) {
+                menuEntryTitle.textContent = `Menu List for ${projects[currentProjectId].name}`;
+                renderMenuItems();
+                showScreen('menuEntry');
+            } else {
+                showAlert('Error', 'Meal not found.');
+                showScreen('projectList'); // Go back to meal list
+            }
+        }
+
+        /**
+         * Deletes a meal.
+         * @param {string} mealId The ID of the meal to delete.
+         */
+        async function deleteProject(mealId) {
+            const project = projects[mealId];
+            if (!project) return;
+
+            const confirmed = await showConfirmDeleteModal(project.name);
+            if (confirmed) {
+                delete projects[mealId];
+                saveProjects();
+                renderProjectList();
+                if (currentProjectId === mealId) {
+                    currentProjectId = null; // Clear current meal if deleted
+                }
+            }
+        }
+
+        // --- Menu Entry Screen Functions ---
+
+        /**
+         * Adds a new menu item to the current meal.
+         */
+        function addMenuItem() {
+            const name = menuItemNameInput.value.trim();
+            const price = parseFloat(menuItemPriceInput.value);
+
+            if (!name || isNaN(price) || price <= 0) {
+                showAlert('Invalid Input', 'Please enter a valid item name and a positive price.');
+                return;
+            }
+
+            if (currentProjectId && projects[currentProjectId]) {
+                const project = projects[currentProjectId];
+                project.menuItems.push({ id: generateUUID(), name: name, price: price });
+                updateCurrentProject();
+                renderMenuItems();
+                menuItemNameInput.value = '';
+                menuItemPriceInput.value = '';
+                menuItemNameInput.focus();
+            }
+        }
+
+        /**
+         * Handles uploading and parsing a receipt file (either text or photo).
+         */
+        async function uploadReceipt() {
+            const file = recipeFileInput.files[0];
+            if (!file) {
+                showAlert('No File Selected', 'Please select a receipt file (photo or text) to upload.');
+                return;
+            }
+
+            loadingIndicator.classList.remove('hidden'); // Show loading indicator
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    if (file.type.startsWith('image/')) {
+                        const base64ImageData = e.target.result.split(',')[1];
+
+                        const prompt = "From this receipt image, extract only the individual item names and their corresponding prices. Return the data as a JSON array of objects. Each object MUST have two properties: 'item' (string, the name of the menu item) and 'price' (number, the price of that item). IMPORTANT: Do not include any other text, introductory phrases, summary totals, taxes, service charges, or tips. Only provide the JSON array of individual line items with their prices. If a price is not clearly associated with an item, or if the item is clearly a total/tax/service charge, do not include it. Example response: [{\"item\": \"Pad Thai\", \"price\": 120.00}, {\"item\": \"Green Curry\", \"price\": 150.50}, {\"item\": \"Sticky Rice\", \"price\": 30.00}]";
+
+                        // --- START MODIFICATION FOR SERVERLESS FUNCTION ---
+                        // IMPORTANT: Replace 'YOUR_SERVERLESS_FUNCTION_URL' with the actual HTTP trigger URL
+                        // of your deployed Google Cloud Function. You will get this URL after deploying
+                        // your Cloud Function in Google Cloud Console.
+                        const serverlessFunctionUrl = 'https://gemini-proxy-525686889297.asia-southeast1.run.app'; 
+                        // If you are developing locally and haven't deployed the function yet,
+                        // you might temporarily use a local proxy URL like 'http://localhost:3000/proxy-gemini-vision'
+                        // but remember to change it back for production deployment.
+                        // For Canvas environment, this URL will be replaced automatically.
+                        // const serverlessFunctionUrl = 'http://localhost:3000/proxy-gemini-vision'; 
+                        // --- END MODIFICATION FOR SERVERLESS FUNCTION ---
+
+                        const response = await fetch(serverlessFunctionUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                prompt: prompt,
+                                mimeType: file.type,
+                                imageData: base64ImageData
+                            })
+                        });
+
+                        const result = await response.json();
+                        console.log('Serverless Function raw response:', result); // Log the full raw response for debugging
+
+                        if (response.ok && result.candidates && result.candidates.length > 0 &&
+                            result.candidates[0].content && result.candidates[0].content.parts &&
+                            result.candidates[0].content.parts.length > 0) {
+                            const rawExtractedText = result.candidates[0].content.parts[0].text;
+                            console.log('Serverless Function extracted text part:', rawExtractedText); // Log the extracted text part
+
+                            if (rawExtractedText.trim() === '') {
+                                showAlert('Extraction Failed', 'The AI did not extract any text from the receipt. Please ensure the receipt is clear and readable.');
+                                console.error('Gemini API returned empty text content via serverless function.');
+                                return; // Exit early
+                            }
+                            try {
+                                const extractedJson = JSON.parse(rawExtractedText);
+                                parseAndAddMenuItemsFromJson(extractedJson);
+                            } catch (jsonError) {
+                                showAlert('Parsing Error', 'The AI returned data that could not be understood (not valid JSON). Please try again with a clearer photo or manually add items. (Error: ' + jsonError.message + '). Check console for raw AI response.');
+                                console.error('Error parsing JSON from serverless function response:', jsonError, 'Raw text:', rawExtractedText);
+                            }
+                        } else {
+                            // Improved error handling for non-200 responses or empty/malformed AI structure
+                            let errorMessage = 'Could not extract menu items from the photo.';
+                            if (result.error && result.error.message) {
+                                errorMessage += ' Server Error: ' + result.error.message;
+                            } else if (result.details) {
+                                errorMessage += ' Details: ' + result.details;
+                            } else {
+                                errorMessage += ' The serverless function response was unexpected or empty.';
+                            }
+                            showAlert('Extraction Failed', errorMessage + ' Please try again with a clearer photo or manually add items.');
+                            console.error('Serverless function response unexpected or error:', result);
+                        }
+
+                    } else if (file.type === 'text/plain' || file.type === 'text/csv') {
+                        // Handle text/csv file (existing logic)
+                        const content = e.target.result;
+                        parseAndAddMenuItemsFromText(content);
+                    } else {
+                        showAlert('Invalid File Type', 'Unsupported file type. Please upload an image, TXT, or CSV file.');
+                    }
+                } catch (error) {
+                    showAlert('Error Processing File', 'An unexpected error occurred while processing the file or communicating with the service. ' + error.message + '. Check console for details.');
+                    console.error('Error in uploadReceipt:', error);
+                } finally {
+                    loadingIndicator.classList.add('hidden'); // Hide loading indicator
+                    recipeFileInput.value = ''; // Clear the file input
+                }
+            };
+            reader.onerror = () => {
+                loadingIndicator.classList.add('hidden'); // Hide loading indicator
+                showAlert('File Read Error', 'Could not read the selected file. Please try again.');
+                recipeFileInput.value = ''; // Clear the file input
+            };
+
+            if (file.type.startsWith('image/')) {
+                reader.readAsDataURL(file); // For images, read as Data URL for base64
+            } else {
+                reader.readAsText(file); // For text/csv, read as plain text
+            }
+        }
+
+        /**
+         * Parses the structured JSON content from image extraction and adds items to the menu.
+         * @param {Array<Object>} extractedItems An array of objects, each with 'item' and 'price'.
+         */
+        function parseAndAddMenuItemsFromJson(extractedItems) {
+            if (!currentProjectId || !projects[currentProjectId]) {
+                showAlert('Error', 'No active meal selected. Please create or select a meal first.');
+                return;
+            }
+
+            const project = projects[currentProjectId];
+            let itemsAddedCount = 0;
+            let errorsFound = 0;
+
+            if (!Array.isArray(extractedItems)) {
+                showAlert('Extraction Error', 'The AI returned an unexpected data format. It should be a list of items. Check console for AI response.');
+                console.error('AI did not return an array as expected:', extractedItems);
+                return;
+            }
+
+            if (extractedItems.length === 0) {
+                 showAlert('No Items Found', 'The AI processed the receipt but found no distinct menu items with prices. Try a clearer photo or manually add items.');
+                 return;
+            }
+
+
+            extractedItems.forEach(itemData => {
+                const name = itemData.item;
+                const price = itemData.price;
+
+                // Robust validation for each item in the JSON array
+                if (typeof name === 'string' && name.trim() !== '' && typeof price === 'number' && price > 0) {
+                    project.menuItems.push({ id: generateUUID(), name: name.trim(), price: price });
+                    itemsAddedCount++;
+                } else {
+                    console.warn(`Skipping invalid item from JSON: Name: "${name}" (type: ${typeof name}), Price: "${price}" (type: ${typeof price})`);
+                    errorsFound++;
+                }
+            });
+
+            handlePostParsing(itemsAddedCount, errorsFound);
+        }
+
+        /**
+         * Parses the raw text content (from TXT/CSV file) and adds items to the menu.
+         * @param {string} content The text content of the file.
+         */
+        function parseAndAddMenuItemsFromText(content) {
+            if (!currentProjectId || !projects[currentProjectId]) {
+                showAlert('Error', 'No active meal selected. Please create or select a meal first.');
+                return;
+            }
+
+            const project = projects[currentProjectId];
+            const lines = content.split('\n');
+            let itemsAddedCount = 0;
+            let errorsFound = 0;
+
+            lines.forEach(line => {
+                const trimmedLine = line.trim();
+                if (!trimmedLine) return; // Skip empty lines
+
+                const parts = trimmedLine.split(',');
+                if (parts.length < 2) {
+                    console.warn(`Skipping malformed line: "${trimmedLine}" - Missing comma separator or invalid format.`);
+                    errorsFound++;
+                    return;
+                }
+
+                const name = parts[0].trim();
+                const price = parseFloat(parts[1].trim());
+
+                if (!name || isNaN(price) || price <= 0) {
+                    console.warn(`Skipping invalid item: "${trimmedLine}" - Invalid name or price.`);
+                    errorsFound++;
+                    return;
+                }
+
+                project.menuItems.push({ id: generateUUID(), name: name, price: price });
+                itemsAddedCount++;
+            });
+
+            handlePostParsing(itemsAddedCount, errorsFound);
+        }
+
+        /**
+         * Handles common logic after parsing items from any source.
+         * @param {number} itemsAddedCount The number of items successfully added.
+         * @param {number} errorsFound The number of errors encountered during parsing.
+         */
+        function handlePostParsing(itemsAddedCount, errorsFound) {
+            if (itemsAddedCount > 0) {
+                updateCurrentProject();
+                renderMenuItems();
+                showAlert('Receipt Uploaded', `${itemsAddedCount} item(s) added to the menu.`);
+            } else if (errorsFound > 0) {
+                showAlert('Receipt Error', `No items were added. Found ${errorsFound} error(s) in the receipt format. Please check the photo clarity or format.`);
+            } else {
+                showAlert('Receipt Empty', 'The uploaded receipt contains no valid items. Please ensure items are clearly listed with prices (e.g., Item Name,Price).');
+            }
+        }
+
+
+        /**
+         * Renders the list of menu items for the current meal.
+         */
+        function renderMenuItems() {
+            menuItemsListDiv.innerHTML = '';
+            const project = projects[currentProjectId];
+            if (project && project.menuItems.length > 0) {
+                project.menuItems.forEach(item => {
+                    const itemElement = document.createElement('div');
+                    itemElement.className = 'list-item';
+                    itemElement.innerHTML = `
+                        <span class="flex-grow text-left">${item.name} (฿${item.price.toFixed(2)})</span>
+                        <button class="list-item-btn delete-menu-item-btn" data-item-id="${item.id}" title="Delete Item">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    menuItemsListDiv.appendChild(itemElement);
+                });
+            } else {
+                menuItemsListDiv.innerHTML = '<p class="text-gray-500 italic">No menu items added yet.</p>';
+            }
+        }
+
+        /**
+         * Deletes a menu item from the current meal.
+         * @param {string} itemId The ID of the menu item to delete.
+         */
+        function deleteMenuItem(itemId) {
+            if (currentProjectId && projects[currentProjectId]) {
+                const project = projects[currentProjectId];
+                // Remove item from menuItems array
+                project.menuItems = project.menuItems.filter(item => item.id !== itemId);
+                // Also remove this item from all assignments
+                for (const personId in project.assignments) {
+                    project.assignments[personId] = project.assignments[personId].filter(assignedId => assignedId !== itemId);
+                }
+                updateCurrentProject();
+                renderMenuItems();
+            }
+        }
+
+        // --- People Entry Screen Functions ---
+
+        /**
+         * Adds a new person to the current meal.
+         */
+        function addPerson() {
+            const name = personNameInput.value.trim();
+            if (!name) {
+                showAlert('Invalid Input', 'Please enter a person\'s name.');
+                return;
+            }
+
+            if (currentProjectId && projects[currentProjectId]) {
+                const project = projects[currentProjectId];
+                project.people.push({ id: generateUUID(), name: name });
+                updateCurrentProject();
+                renderPeopleList();
+                personNameInput.value = '';
+                personNameInput.focus();
+            }
+        }
+
+        /**
+         * Renders the list of people for the current meal.
+         */
+        function renderPeopleList() {
+            peopleListDiv.innerHTML = '';
+            const project = projects[currentProjectId];
+            if (project && project.people.length > 0) {
+                project.people.forEach(person => {
+                    const personElement = document.createElement('div');
+                    personElement.className = 'list-item';
+                    personElement.innerHTML = `
+                        <span class="flex-grow text-left">${person.name}</span>
+                        <button class="list-item-btn delete-person-btn" data-person-id="${person.id}" title="Delete Person">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    `;
+                    peopleListDiv.appendChild(personElement);
+                });
+            } else {
+                peopleListDiv.innerHTML = '<p class="text-gray-500 italic">No people added yet.</p>';
+            }
+        }
+
+        /**
+         * Deletes a person from the current meal.
+         * @param {string} personId The ID of the person to delete.
+         */
+        function deletePerson(personId) {
+            if (currentProjectId && projects[currentProjectId]) {
+                const project = projects[currentProjectId];
+                project.people = project.people.filter(person => person.id !== personId);
+                // Remove this person's assignments
+                delete project.assignments[personId];
+                updateCurrentProject();
+                renderPeopleList();
+            }
+        }
+
+        // --- Item Assignment Screen Functions ---
+
+        /**
+         * Initializes and renders the item assignment screen for the current person.
+         */
+        function initItemAssignmentScreen() {
+            const project = projects[currentProjectId];
+            if (!project || project.people.length === 0) {
+                showAlert('No People', 'Please add people before assigning items.');
+                showScreen('peopleEntry');
+                return;
+            }
+            if (project.menuItems.length === 0) {
+                showAlert('No Items', 'Please add menu items before assigning them.');
+                showScreen('menuEntry');
+                return;
+            }
+
+            currentAssignmentPersonIndex = 0;
+            renderItemAssignmentForCurrentPerson();
+            showScreen('itemAssignment');
+        }
+
+        /**
+         * Renders menu items with checkboxes for the current person in the assignment flow.
+         */
+        function renderItemAssignmentForCurrentPerson() {
+            const project = projects[currentProjectId];
+            const currentPerson = project.people[currentAssignmentPersonIndex];
+
+            if (!currentPerson) {
+                // All people assigned, move to final details
+                showScreen('finalDetails');
+                // Initialize values from meal data
+                vatPercentInput.value = project.vat;
+                serviceChargePercentInput.value = project.serviceCharge;
+                // Removed tipAmountInput, so setting project.tip to 0
+                project.tip = 0;
+                return;
+            }
+
+            itemAssignmentPersonName.textContent = `Assign Items to ${currentPerson.name}`;
+            assignmentListContainer.innerHTML = ''; // Clear previous items
+
+            const assignedItems = project.assignments[currentPerson.id] || [];
+
+            project.menuItems.forEach(item => {
+                const label = document.createElement('label');
+                label.innerHTML = `
+                    <input type="checkbox" data-item-id="${item.id}" ${assignedItems.includes(item.id) ? 'checked' : ''}>
+                    <span>${item.name}</span>
+                    <span class="item-price">฿${item.price.toFixed(2)}</span>
+                `;
+                assignmentListContainer.appendChild(label);
+            });
+        }
+
+        /**
+         * Saves the current person's item assignments.
+         */
+        function saveCurrentPersonAssignments() {
+            const project = projects[currentProjectId];
+            const currentPerson = project.people[currentAssignmentPersonIndex];
+            if (!currentPerson) return;
+
+            const selectedItems = Array.from(assignmentListContainer.querySelectorAll('input[type="checkbox"]:checked'))
+                                      .map(checkbox => checkbox.dataset.itemId);
+            project.assignments[currentPerson.id] = selectedItems;
+            updateCurrentProject();
+        }
+
+        // --- Final Details Screen Functions ---
+
+        /**
+         * Handles the calculation of the final bill split, now sharing item costs.
+         */
+        function calculateFinalSplit() {
+            const project = projects[currentProjectId];
+            if (!project) return;
+
+            // Save the current tax/tip values, tip will now always be 0
+            project.vat = parseFloat(vatPercentInput.value) || 0;
+            project.serviceCharge = parseFloat(serviceChargePercentInput.value) || 0;
+            project.tip = 0; // Explicitly set tip to 0
+            updateCurrentProject();
+
+            // Initialize subtotals for each person based on shared items
+            const personItemPrices = {}; // The 'Price' column for each person
+            project.people.forEach(person => {
+                personItemPrices[person.id] = 0;
+            });
+
+            let totalBillBeforeExtras = 0; // Sum of all item prices, even shared ones
+
+            // Iterate through menu items to distribute their cost
+            project.menuItems.forEach(item => {
+                const peopleSharingThisItem = [];
+                project.people.forEach(person => {
+                    const assignedItemIds = project.assignments[person.id] || [];
+                    if (assignedItemIds.includes(item.id)) {
+                        peopleSharingThisItem.push(person.id);
+                    }
+                });
+
+                const numberOfSharers = peopleSharingThisItem.length;
+                if (numberOfSharers > 0) {
+                    const sharePerPerson = item.price / numberOfSharers;
+                    peopleSharingThisItem.forEach(personId => {
+                        personItemPrices[personId] += sharePerPerson;
+                    });
+                }
+                totalBillBeforeExtras += item.price; // Sum of all items, regardless of sharing
+            });
+
+            // Calculate total service charge based on totalBillBeforeExtras
+            let totalServiceChargeAmount = 0;
+            if (project.serviceCharge > 0) {
+                totalServiceChargeAmount = totalBillBeforeExtras * (project.serviceCharge / 100);
+            }
+
+            // Calculate VAT from the sum of price + service charge
+            const amountAfterServiceCharge = totalBillBeforeExtras + totalServiceChargeAmount;
+            let totalTaxAmount = 0;
+            if (project.vat > 0) {
+                totalTaxAmount = amountAfterServiceCharge * (project.vat / 100);
+            }
+
+            let totalTipAmount = 0; // Tip is now always 0
+            
+            const personCalculations = {}; // Stores price, vat_amount, service_charge_amount, total for each person
+
+            // Distribute tax, service charge, and tip proportionally based on `personItemPrices`
+            project.people.forEach(person => {
+                const itemPriceForPerson = personItemPrices[person.id]; // This is the 'Price' for the person
+                let personShareOfTax = 0;
+                let personShareOfServiceCharge = 0;
+                let personShareOfTip = 0; // Will always be 0 now
+
+                // Calculate the ratio of this person's item price to the total bill before extras
+                // This ratio is used to distribute the *global* service charge and tax amounts.
+                let shareRatio = 0;
+                if (totalBillBeforeExtras > 0) {
+                    shareRatio = itemPriceForPerson / totalBillBeforeExtras;
+                } else if (project.people.length > 0) {
+                    // If totalBillBeforeExtras is 0, distribute fixed tip/service charge/vat evenly among people
+                    shareRatio = 1 / project.people.length;
+                }
+
+                personShareOfServiceCharge = totalServiceChargeAmount * shareRatio;
+                personShareOfTax = totalTaxAmount * shareRatio;
+                personShareOfTip = totalTipAmount * shareRatio; // Still results in 0 if totalTipAmount is 0
+
+                const personTotal = itemPriceForPerson + personShareOfTax + personShareOfServiceCharge + personShareOfTip;
+
+                personCalculations[person.id] = {
+                    price: itemPriceForPerson,
+                    vat_amount: personShareOfTax,
+                    service_charge_amount: personShareOfServiceCharge,
+                    total: personTotal
+                };
+            });
+
+            renderResults(personCalculations);
+            showScreen('result');
+        }
+
+        /**
+         * Renders the final split results on the Result Screen in a table format.
+         * @param {Object} personCalculations An object mapping person IDs to their calculated amounts (price, vat_amount, service_charge_amount, total).
+         */
+        function renderResults(personCalculations) {
+            resultsTableBody.innerHTML = '';
+            const project = projects[currentProjectId];
+
+            let grandTotalPriceSum = 0;
+            let grandTotalVatSum = 0;
+            let grandTotalServiceChargeSum = 0;
+            let grandTotalFinalSum = 0;
+
+            // Update table headers for VAT and Service Charge percentages
+            document.querySelector('.result-table thead th:nth-child(3)').textContent = `Service Charge (${project.serviceCharge}%)`;
+            document.querySelector('.result-table thead th:nth-child(4)').textContent = `VAT (${project.vat}%)`;
+
+            project.people.forEach(person => {
+                const data = personCalculations[person.id] || { price: 0, vat_amount: 0, service_charge_amount: 0, total: 0 };
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${person.name}</td>
+                    <td>฿${data.price.toFixed(2)}</td>
+                    <td>฿${data.service_charge_amount.toFixed(2)}</td>
+                    <td>฿${data.vat_amount.toFixed(2)}</td>
+                    <td>฿${data.total.toFixed(2)}</td>
+                `;
+                resultsTableBody.appendChild(row);
+
+                grandTotalPriceSum += data.price;
+                grandTotalVatSum += data.vat_amount;
+                grandTotalServiceChargeSum += data.service_charge_amount;
+                grandTotalFinalSum += data.total;
+            });
+
+            grandTotalFinalSum = Object.values(personCalculations).reduce((sum, data) => sum + data.total, 0);
+
+
+            // Update grand total row
+            grandTotalPrice.textContent = `฿${grandTotalPriceSum.toFixed(2)}`;
+            grandTotalServiceCharge.textContent = `฿${grandTotalServiceChargeSum.toFixed(2)}`;
+            grandTotalVat.textContent = `฿${grandTotalVatSum.toFixed(2)}`;
+            grandTotalFinal.textContent = `฿${grandTotalFinalSum.toFixed(2)}`;
+
+        }
+
+
+        // --- Event Listeners ---
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadProjects(); // Load meals when the app starts
+            showScreen('projectList'); // Start on the meal list screen
+
+            // Meal List Screen Events
+            addProjectBtn.addEventListener('click', createNewProject);
+            projectListDiv.addEventListener('click', (event) => {
+                // Handle meal selection
+                if (event.target.classList.contains('project-name-display')) {
+                    selectProject(event.target.dataset.projectId);
+                }
+                // Handle edit button
+                if (event.target.closest('.edit-project-btn')) {
+                    const projectId = event.target.closest('.edit-project-btn').dataset.projectId;
+                    editProjectName(projectId);
+                }
+                // Handle delete button
+                if (event.target.closest('.delete-project-btn')) {
+                    const projectId = event.target.closest('.delete-project-btn').dataset.projectId;
+                    deleteProject(projectId);
+                }
+            });
+
+            // Menu Entry Screen Events
+            addMenuItemBtn.addEventListener('click', addMenuItem);
+            uploadRecipeBtn.addEventListener('click', uploadReceipt);
+            menuItemsListDiv.addEventListener('click', (event) => {
+                if (event.target.closest('.delete-menu-item-btn')) {
+                    const itemId = event.target.closest('.delete-menu-item-btn').dataset.itemId;
+                    deleteMenuItem(itemId);
+                }
+            });
+            menuBackBtn.addEventListener('click', () => showScreen('projectList'));
+            menuNextBtn.addEventListener('click', () => {
+                if (projects[currentProjectId].menuItems.length === 0) {
+                    showAlert('No Items', 'Please add at least one menu item.');
+                    return;
+                }
+                peopleEntryTitle.textContent = `People for ${projects[currentProjectId].name}`;
+                renderPeopleList();
+                showScreen('peopleEntry');
+            });
+
+            // People Entry Screen Events
+            addPersonBtn.addEventListener('click', addPerson);
+            peopleListDiv.addEventListener('click', (event) => {
+                if (event.target.closest('.delete-person-btn')) {
+                    const personId = event.target.closest('.delete-person-btn').dataset.personId;
+                    deletePerson(personId);
+                }
+            });
+            peopleBackBtn.addEventListener('click', () => showScreen('menuEntry'));
+            peopleNextBtn.addEventListener('click', initItemAssignmentScreen); // This handles the loop
+
+            // Item Assignment Screen Events
+            assignmentBackBtn.addEventListener('click', () => {
+                saveCurrentPersonAssignments(); // Save assignments before going back
+                if (currentAssignmentPersonIndex > 0) {
+                    currentAssignmentPersonIndex--;
+                    renderItemAssignmentForCurrentPerson();
+                } else {
+                    showScreen('peopleEntry'); // Back to people entry
+                }
+            });
+            assignmentNextBtn.addEventListener('click', () => {
+                saveCurrentPersonAssignments(); // Save current person's assignments
+                const project = projects[currentProjectId];
+                if (currentAssignmentPersonIndex < project.people.length - 1) {
+                    currentAssignmentPersonIndex++;
+                    renderItemAssignmentForCurrentPerson();
+                } else {
+                    // Last person assigned, move to final details
+                    showScreen('finalDetails');
+                    // Initialize values from meal data
+                    vatPercentInput.value = project.vat;
+                    serviceChargePercentInput.value = project.serviceCharge;
+                    project.tip = 0; // Ensure tip is zero when moving to final details
+                }
+            });
+
+            // Final Details Screen Events
+            finalDetailsBackBtn.addEventListener('click', () => {
+                // Go back to the last person assigned, or people entry if no one assigned yet
+                const project = projects[currentProjectId];
+                if (project && project.people.length > 0) {
+                    currentAssignmentPersonIndex = project.people.length - 1; // Go back to the last person in the assignment flow
+                    renderItemAssignmentForCurrentPerson();
+                    showScreen('itemAssignment');
+                } else {
+                    showScreen('peopleEntry'); // Fallback if no people
+                }
+            });
+            calculateFinalBtn.addEventListener('click', calculateFinalSplit);
+
+            // Result Screen Events
+            resultBackToProjectsBtn.addEventListener('click', () => {
+                currentProjectId = null; // Clear current meal
+                showScreen('projectList');
+                renderProjectList(); // Re-render in case anything changed or a meal was deleted
+            });
+
+            // Custom Alert Modal Events
+            customAlertOkBtn.addEventListener('click', hideAlert);
+        });
+
+    </script>
+</body>
+</html>
